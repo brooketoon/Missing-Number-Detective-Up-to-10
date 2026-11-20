@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Missing Number Detective</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#157A4A; --green-soft:#E4F6EC;
+  --blue:#1F5BB5; --blue-soft:#E6EFFB;
+  --purple:#7248B4; --purple-soft:#F0E9FA;
+  --teal:#0F7C76; --teal-soft:#E0F4F2;
+  --red:#D63A3A; --red-soft:#FCEAEA;
+  --amber:#8A5A12; --amber-soft:#FDF3E1;
+  --ink:#1E2430; --muted:#5C6577; --paper:#FFFFFF; --bg:#F7F5FB;
+  --accent:var(--purple); --accent-soft:var(--purple-soft);
+  --tf:54px;
+}
+*{box-sizing:border-box;}
+[hidden]{display:none !important;}
+.sr-only{position:absolute !important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+html,body{margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:'Andika','Comic Sans MS',Verdana,sans-serif;font-size:18px;line-height:1.5;-webkit-text-size-adjust:100%;}
+button{font-family:'Fredoka',sans-serif;font-size:18px;cursor:pointer;}
+input{font-family:'Andika',Verdana,sans-serif;}
+button:focus-visible,[role=button]:focus-visible,summary:focus-visible{outline:3px solid var(--ink);outline-offset:3px;}
+h1[tabindex="-1"]:focus{outline:none;}
+
+/* ---------- top bar ---------- */
+.topbar{background:var(--paper);border-bottom:3px solid var(--accent);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.brandwrap{display:flex;align-items:center;gap:10px;}
+.home{height:44px;border-radius:12px;border:3px solid var(--accent);background:#fff;color:var(--accent);font-size:17px;line-height:1;padding:0 14px;display:flex;align-items:center;gap:6px;}
+.home:hover{background:var(--accent-soft);}
+.home .hi{font-size:20px;}
+.brand{font-family:'Fredoka',sans-serif;font-size:22px;color:var(--accent);cursor:pointer;}
+.dots{display:flex;gap:8px;align-items:center;}
+.dot{width:15px;height:15px;flex:none;border-radius:50%;background:#DDD8E6;}
+.dot.done{background:var(--green);}
+.dot.now{background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft);}
+.count{font-size:16px;color:var(--muted);}
+body.on-landing .topbar{display:none;}
+body.on-paper .dots, body.on-paper .count{display:none;}
+
+/* ---------- practice card ---------- */
+#practice{max-width:760px;margin:0 auto;padding:26px 16px 70px;}
+.card{background:var(--paper);border-radius:22px;padding:24px 20px;box-shadow:0 6px 0 var(--accent-soft);border:2px solid var(--accent-soft);}
+.kind{font-family:'Fredoka',sans-serif;font-size:20px;color:var(--accent);text-align:center;margin:0 0 2px;}
+.hint{font-size:16px;color:var(--muted);text-align:center;margin:0 0 18px;}
+
+.eq{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:nowrap;margin:0 0 18px;}
+.eq .n{font-size:60px;font-weight:700;line-height:1;min-width:44px;text-align:center;}
+.eq .sym{font-size:52px;font-weight:700;color:var(--muted);line-height:1;}
+.ansbox{width:90px;height:90px;font-size:56px;font-weight:700;text-align:center;border:4px dashed #8A82A0;border-radius:18px;background:#FCFBFE;color:var(--ink);padding:0;}
+.ansbox:focus{outline:none;border-color:var(--accent);border-style:solid;background:#fff;box-shadow:0 0 0 5px var(--accent-soft);}
+.ansbox.wrong{border-color:var(--red);border-style:solid;background:var(--red-soft);animation:shake .4s;}
+.ansbox.shown{border-color:var(--blue);border-style:solid;background:var(--blue-soft);color:var(--blue);}
+.ansbox.good{border-color:var(--green);border-style:solid;background:var(--green-soft);color:var(--green);}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* ten-frame */
+.tfwrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin:0 0 6px;}
+.tf{display:grid;grid-template-columns:repeat(5,var(--tf));grid-template-rows:repeat(2,var(--tf));border:4px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff;}
+.tfc{width:var(--tf);height:var(--tf);border-right:3px solid var(--ink);border-bottom:3px solid var(--ink);display:flex;align-items:center;justify-content:center;padding:0;background:#fff;position:relative;}
+.tfc:nth-child(5n){border-right:none;}
+.tfc:nth-child(n+6){border-bottom:none;}
+.tfc .dotc{width:70%;height:70%;border-radius:50%;}
+.tfc.have .dotc{background:var(--blue);}
+.tfc.target{cursor:pointer;}
+.tfc.target .dotc{border:3px dashed var(--green);background:transparent;}
+.tfc.target:hover .dotc{background:var(--green-soft);}
+.tfc.target.filled .dotc{background:var(--green);border-style:solid;}
+.tfc.off{background:repeating-linear-gradient(45deg,#F1EEF6,#F1EEF6 6px,#E4DFEC 6px,#E4DFEC 12px);}
+.tfc .lab{position:absolute;bottom:2px;right:4px;font-size:12px;font-family:'Fredoka',sans-serif;color:#fff;}
+.tflegend{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;font-size:15px;color:var(--muted);}
+.tflegend i{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;margin-right:5px;}
+.tflegend .lh{background:var(--blue);}
+.tflegend .lt{border:2px dashed var(--green);}
+.tflegend .lf{background:var(--green);}
+.tfcount{font-family:'Fredoka',sans-serif;font-size:18px;color:var(--green);min-height:27px;}
+.showtf{display:block;margin:4px auto 0;border:3px solid var(--teal);font-family:'Fredoka',sans-serif;background:#fff;color:var(--teal);border-radius:12px;padding:7px 16px;font-size:16px;}
+
+/* feedback + coach */
+.feedback{min-height:30px;text-align:center;margin:16px 0 4px;font-size:20px;font-family:'Fredoka',sans-serif;}
+.feedback.good{color:var(--green);}
+.feedback.fix{color:var(--red);}
+.coach{display:flex;gap:12px;align-items:flex-start;margin:10px auto 4px;max-width:560px;background:var(--amber-soft);border:3px solid #D9A84E;border-radius:18px;padding:14px 14px 12px;animation:pop .25s ease-out;}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.coach .body{flex:1;}
+.coach .lvl{font-family:'Fredoka',sans-serif;font-size:15px;color:var(--amber);margin:0 0 2px;}
+.coach p{margin:0 0 6px;font-size:18px;}
+.coach .tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+.sbtn{border:3px solid var(--purple);background:#fff;color:var(--purple);border-radius:12px;padding:5px 12px;font-size:16px;}
+.sbtn.fill{background:var(--blue);border-color:var(--blue);color:#fff;}
+.hops{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0;}
+.hops .hstart{font-size:22px;font-weight:700;border:3px solid var(--blue);color:var(--blue);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;background:#fff;}
+.hops .hop{display:flex;flex-direction:column;align-items:center;}
+.hops .hop b{font-size:20px;width:38px;height:38px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;}
+.hops .hop small{font-size:12px;color:var(--muted);height:16px;}
+.hops .arr{color:#9C86C9;font-weight:700;}
+
+.actions{display:flex;gap:12px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+.btn{border:none;border-radius:14px;padding:14px 30px;color:#fff;font-size:19px;}
+.btn.check{background:var(--accent);box-shadow:0 4px 0 rgba(0,0,0,.22);}
+.btn.next{background:var(--green);box-shadow:0 4px 0 #0F5A37;}
+.btn:active{transform:translateY(3px);box-shadow:none;}
+.btn.ghost{background:#fff;color:var(--purple);border:3px solid var(--purple);box-shadow:none;}
+.btn.sm{padding:9px 16px;font-size:16px;}
+
+/* ---------- landing ---------- */
+.landing{max-width:760px;margin:0 auto;padding:18px 16px 50px;}
+.big{font-family:'Fredoka',sans-serif;font-size:36px;color:var(--purple);text-align:center;margin:0 0 10px;line-height:1.15;}
+.hero{display:flex;align-items:flex-end;justify-content:center;gap:10px;margin:0 0 12px;}
+.bubble{position:relative;background:#fff;border:3px solid var(--purple-soft);border-radius:20px;padding:12px 16px;max-width:330px;margin-bottom:40px;box-shadow:0 4px 0 var(--purple-soft);}
+.bubble::after{content:"";position:absolute;left:-16px;bottom:22px;border-width:10px 16px 10px 0;border-style:solid;border-color:transparent var(--purple-soft) transparent transparent;}
+.bubble p{margin:0 0 4px;font-size:18px;}
+.speak{border:none;background:var(--purple-soft);color:var(--purple);border-radius:10px;padding:4px 10px;font-size:15px;margin-top:4px;}
+.namebox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:0 0 12px;}
+.namebox label{font-family:'Fredoka',sans-serif;font-size:19px;}
+.namebox input{width:min(320px,90%);height:56px;font-size:24px;text-align:center;border:3px dashed var(--purple);border-radius:14px;background:#fff;color:var(--ink);}
+.namebox input:focus{outline:none;border-style:solid;box-shadow:0 0 0 4px var(--purple-soft);}
+.ndots{text-align:center;color:var(--muted);font-size:17px;margin:0 0 10px;}
+.ndots .row{display:flex;gap:7px;justify-content:center;margin-top:4px;}
+.ndots .row i{width:18px;height:18px;border-radius:50%;background:var(--green-soft);border:3px solid var(--green);display:block;}
+.start{display:block;margin:0 auto 18px;background:var(--green);box-shadow:0 6px 0 #0F5A37;font-size:26px;padding:16px 46px;border-radius:18px;}
+.grownups{background:#fff;border-radius:16px;border:2px solid #E3DEEC;padding:10px 16px;font-size:16px;}
+.grownups summary{cursor:pointer;font-family:'Fredoka',sans-serif;color:var(--purple);font-size:17px;}
+.grownups p{margin:8px 0;color:var(--muted);}
+.grownups .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0;}
+.seg{display:flex;border:3px solid var(--purple);border-radius:12px;overflow:hidden;}
+.seg button{border:none;background:#fff;color:var(--purple);padding:7px 14px;font-size:15px;}
+.seg button.on{background:var(--purple);color:#fff;}
+
+/* demo */
+.demo{background:#fff;border-radius:22px;border:3px solid var(--purple-soft);padding:14px;margin:0 0 18px;box-shadow:0 5px 0 var(--purple-soft);}
+.demo h2{font-family:'Fredoka',sans-serif;color:var(--purple);font-size:21px;text-align:center;margin:0 0 8px;}
+.demotabs{display:flex;gap:8px;justify-content:center;margin:0 0 6px;flex-wrap:wrap;}
+.demotab{border:3px solid var(--purple-soft);background:#fff;color:var(--purple);border-radius:12px;padding:7px 14px;font-size:16px;}
+.demotab.on{background:var(--purple);color:#fff;border-color:var(--purple);}
+.caption{min-height:58px;background:var(--purple-soft);border-radius:14px;padding:8px 14px;font-size:19px;text-align:center;margin:6px 0 8px;display:flex;align-items:center;justify-content:center;gap:10px;}
+.caption .num{flex:0 0 auto;width:32px;height:32px;border-radius:50%;background:var(--purple);color:#fff;font-family:'Fredoka',sans-serif;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.stage{position:relative;padding:6px 0;--tf:40px;min-height:300px;}
+.sleft{display:flex;flex-direction:column;align-items:center;}
+.deq{display:flex;align-items:center;justify-content:center;gap:10px;margin:2px 0 12px;}
+.deq .n{font-size:44px;font-weight:700;line-height:1;border-radius:10px;padding:0 6px;transition:background .3s;}
+.deq .n.hl{background:#FFF0B8;}
+.deq .sym{font-size:38px;font-weight:700;color:var(--muted);}
+.dbox{width:64px;height:64px;border:4px dashed #8A82A0;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;background:#FCFBFE;}
+.dbox.filled{border-style:solid;}
+.dbox.wrong{border-style:solid;border-color:var(--red);background:var(--red-soft);}
+.dbox.good{border-style:solid;border-color:var(--green);background:var(--green-soft);color:var(--green);}
+.dcheck{display:table;margin:12px auto 0;color:#fff;background:var(--purple);border-radius:12px;padding:9px 20px;font-family:'Fredoka',sans-serif;font-size:16px;box-shadow:0 3px 0 rgba(0,0,0,.2);}
+.dfb{min-height:24px;text-align:center;font-family:'Fredoka',sans-serif;font-size:17px;margin-top:6px;color:var(--green);}
+.dcoach{max-width:360px;margin:6px auto 0;background:var(--amber-soft);border:3px solid #D9A84E;border-radius:14px;padding:8px 12px;font-size:16px;line-height:1.35;}
+.dcoach b.t{color:var(--amber);font-family:'Fredoka',sans-serif;font-weight:500;display:block;}
+.finger{position:absolute;left:0;top:0;font-size:36px;line-height:1;pointer-events:none;z-index:3;transition:left .55s ease,top .55s ease,opacity .3s;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25));}
+.finger.tap{animation:tap .45s .6s;}
+@keyframes tap{50%{transform:scale(.78) translateY(-4px);}}
+.dctrl{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;}
+.dctrl .sbtn{font-size:17px;padding:8px 16px;}
+.dctrl .sbtn.go{background:var(--purple);color:#fff;}
+.dctrl .sbtn:disabled{opacity:.4;cursor:default;}
+.dprog{display:flex;gap:6px;justify-content:center;margin:8px 0 0;}
+.dprog i{width:10px;height:10px;border-radius:50%;background:#DDD8E6;display:block;}
+.dprog i.on{background:var(--purple);}
+
+/* ---------- done ---------- */
+.donescreen{text-align:center;padding:14px 4px;}
+.donescreen h1{font-family:'Fredoka',sans-serif;font-size:30px;color:var(--green);margin:6px 0;}
+.donescreen p{font-size:18px;color:var(--muted);margin:0 0 16px;}
+.trophy{font-size:60px;}
+.stars{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:0 0 18px;}
+.starchip{border-radius:14px;padding:8px 12px;background:var(--green-soft);font-size:16px;min-width:104px;}
+.starchip .s{font-size:26px;display:block;}
+.starchip.fixed{background:var(--blue-soft);}
+.starchip.together{background:var(--purple-soft);}
+.grownrow{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:20px;padding-top:16px;border-top:2px dashed #E3DEEC;font-size:16px;color:var(--muted);}
+
+/* ---------- paper views ---------- */
+.paperwrap{max-width:820px;margin:0 auto;padding:18px 14px 60px;}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0 0 16px;}
+.paper{background:#fff;border-radius:10px;box-shadow:0 2px 14px rgba(30,36,48,.10);padding:34px 38px;font-family:Verdana,'Andika',sans-serif;font-size:14px;line-height:1.45;color:#222;}
+.paper h1{font-family:'Fredoka',sans-serif;font-size:26px;color:var(--purple);margin:0;}
+.paper h2{font-family:'Fredoka',sans-serif;font-size:18px;color:var(--purple);margin:22px 0 8px;border-bottom:2px solid var(--purple-soft);padding-bottom:3px;}
+.paper .meta{color:var(--muted);font-size:13px;margin:2px 0 0;}
+.paper table{border-collapse:collapse;width:100%;font-size:13px;}
+.paper th,.paper td{text-align:left;padding:6px 8px;border-bottom:1px solid #EAE6F0;vertical-align:top;}
+.paper th{background:#F7F5FB;}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0 4px;}
+.kpi{border:2px solid var(--purple-soft);border-radius:10px;padding:8px 10px;}
+.kpi b{display:block;font-size:22px;font-family:'Fredoka',sans-serif;}
+.kpi span{font-size:12px;color:var(--muted);}
+.summary{background:#F7F5FB;border-radius:10px;padding:12px 14px;margin:12px 0 0;font-size:14.5px;}
+.pillst{display:inline-block;border-radius:20px;padding:1px 9px;font-size:12px;font-weight:700;white-space:nowrap;}
+.pillst.strong{background:var(--green-soft);color:#14764A;}
+.pillst.growing{background:var(--blue-soft);color:var(--blue);}
+.pillst.focus{background:var(--red-soft);color:#A02C2C;}
+.pillst.none{background:#EEE;color:#555;}
+.bar{height:9px;border-radius:5px;background:#EEE9F5;overflow:hidden;min-width:80px;}
+.bar i{display:block;height:100%;background:var(--purple);border-radius:5px;}
+.notice{border-left:4px solid var(--amber);background:var(--amber-soft);padding:9px 12px;border-radius:6px;margin:8px 0;}
+.notice b{display:block;}
+.notice .ex{color:var(--muted);font-size:12.5px;}
+.small{font-size:12px;color:var(--muted);}
+.rp-empty{text-align:center;padding:40px 10px;color:var(--muted);font-size:16px;}
+.danger{border-color:var(--red) !important;color:var(--red) !important;}
+
+/* practice sheet */
+.sheet{font-family:'Andika',Verdana,sans-serif;}
+.sh-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:3px solid var(--purple);padding-bottom:6px;}
+.sh-head .nm, .contd .nm{font-size:15px;}
+.nm span{display:inline-block;min-width:150px;border-bottom:1.5px solid #333;padding:0 4px;font-weight:700;}
+.focusline{font-size:13px;margin:6px 0 0;}
+.remember{border:2px dashed var(--green);border-radius:10px;padding:6px 10px;margin:8px 0;font-size:14px;background:#F6FCF8;}
+.remember b{color:var(--green);}
+.example{display:flex;gap:18px;align-items:center;border:2px solid var(--purple-soft);border-radius:12px;padding:10px 14px;margin:8px 0 12px;}
+.exlabel{font-family:'Fredoka',sans-serif;color:var(--purple);font-size:15px;margin:0 0 4px;}
+.example ol{margin:0;padding-left:20px;font-size:13.5px;}
+.wgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.wp{border:2px solid #E3DEEC;border-radius:12px;padding:8px 12px 12px;}
+.wph{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);}
+.wph b{font-size:17px;color:var(--ink);}
+.peq{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0 8px;}
+.peq .n{font-size:40px;font-weight:700;line-height:1;}
+.peq .sym{font-size:34px;font-weight:700;color:#555;}
+.peq .pb{width:58px;height:58px;border:2.5px solid #9A93A8;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;color:var(--blue);}
+.peq .pb.key{border-color:var(--blue);}
+.ptf{display:grid;grid-template-columns:repeat(5,30px);grid-template-rows:repeat(2,30px);border:2.5px solid #222;border-radius:6px;overflow:hidden;margin:0 auto;width:max-content;}
+.ptf div{border-right:2px solid #222;border-bottom:2px solid #222;display:flex;align-items:center;justify-content:center;}
+.ptf div:nth-child(5n){border-right:none;}
+.ptf div:nth-child(n+6){border-bottom:none;}
+.ptf .h::before{content:"";width:20px;height:20px;border-radius:50%;background:var(--blue);}
+.ptf .t::before{content:"";width:18px;height:18px;border-radius:50%;border:2px dashed var(--green);}
+.ptf .f::before{content:"";width:20px;height:20px;border-radius:50%;background:var(--green);}
+.ptf .o{background:repeating-linear-gradient(45deg,#F1EEF6,#F1EEF6 4px,#E0DBE9 4px,#E0DBE9 8px);}
+.writeline{height:46px;border-bottom:1.5px dotted #CFC8DC;margin:0 6px;}
+.writeline small{font-size:11px;color:var(--muted);}
+.tag{font-size:10.5px;border-radius:8px;padding:0 6px;}
+.tag.warm{background:var(--green-soft);color:#14764A;}
+.tag.focus{background:var(--purple-soft);color:var(--purple);}
+.contd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid var(--purple);padding-bottom:4px;margin:0 0 14px;}
+.contd h2{border:none;margin:0;padding:0;}
+.kgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.kcard{display:flex;gap:10px;align-items:center;border:1.5px solid #E3DEEC;border-radius:10px;padding:5px 9px;break-inside:avoid;}
+.kcard h3{margin:0 0 3px;font-size:15px;font-family:'Fredoka',sans-serif;font-weight:600;color:var(--purple);}
+.kcard ol{margin:0;padding-left:18px;font-size:11.5px;line-height:1.3;}
+.kcard .sk{font-size:11px;color:var(--muted);margin:3px 0 0;}
+.kcard .ptf{grid-template-columns:repeat(5,20px);grid-template-rows:repeat(2,20px);}
+.kcard .ptf .h::before,.kcard .ptf .f::before{width:13px;height:13px;}
+.pagebreak{break-before:page;page-break-before:always;margin-top:30px;}
+.wp .ptf{grid-template-columns:repeat(5,36px);grid-template-rows:repeat(2,36px);}
+.wp .ptf .h::before{width:26px;height:26px;}
+.wp .ptf .t::before{width:24px;height:24px;}
+.keywatch{font-size:12.5px;margin:6px 0 0;padding-left:18px;}
+
+/* ---------- responsive ---------- */
+@media (min-width:980px){
+  .landing{max-width:1240px;padding:10px 24px 20px;display:grid;grid-template-columns:clamp(300px,28vw,360px) minmax(0,1fr);column-gap:24px;align-items:start;
+    grid-template-areas:"title demo" "hero demo" "name demo" "dots demo" "start demo" "grown demo";grid-template-rows:auto auto auto auto auto 1fr;}
+  .landing .big{grid-area:title;text-align:left;font-size:32px;margin:4px 0 8px;}
+  .landing .hero{grid-area:hero;justify-content:flex-start;align-items:flex-start;gap:6px;}
+  #heroMascot svg{width:112px;height:auto;}
+  .landing .bubble{margin:6px 0 0;max-width:240px;flex:1 1 auto;}
+  .landing .bubble::after{bottom:auto;top:30px;}
+  .landing .bubble p{font-size:17px;}
+  .landing .demo{grid-area:demo;margin:0;}
+  .landing .namebox{grid-area:name;align-items:stretch;}
+  .landing .namebox input{width:100%;}
+  .landing .ndots{grid-area:dots;text-align:left;}
+  .landing .ndots .row{justify-content:flex-start;}
+  .landing .start{grid-area:start;width:100%;margin:0 0 14px;}
+  .landing .grownups{grid-area:grown;}
+  .stage{display:flex;justify-content:center;align-items:center;gap:22px;min-height:300px;--tf:36px;}
+  .stage .hops{margin:6px 0 0;}
+  .stage .deq{margin:0 0 10px;}
+  .sright{flex:0 1 320px;min-width:260px;}
+  .sright .dcoach{margin:0;max-width:none;}
+}
+@media (max-width:560px){
+  :root{--tf:48px;}
+  .eq{gap:8px;} .eq .n{font-size:48px;} .eq .sym{font-size:42px;}
+  .ansbox{width:76px;height:76px;font-size:46px;}
+  #practice{padding:18px 10px 60px;}
+  .card{padding:20px 12px;}
+  .big{font-size:30px;}
+  .paper{padding:18px 14px;}
+  .kpis{grid-template-columns:repeat(2,1fr);}
+  .wgrid,.kgrid{grid-template-columns:1fr;}
+}
+@media (max-width:380px){
+  :root{--tf:42px;}
+  .eq .n{font-size:42px;} .eq .sym{font-size:36px;}
+  .ansbox{width:66px;height:66px;font-size:40px;}
+  .start{padding:14px 30px;font-size:22px;}
+  .stage{--tf:34px;}
+}
+@media (prefers-reduced-motion:reduce){ *{animation:none !important;transition:none !important;} }
+@media print{
+  @page{size:letter;margin:0.45in;}
+  body{background:#fff;}
+  .noprint,.topbar,#confetti{display:none !important;}
+  .paperwrap{max-width:none;padding:0;margin:0;}
+  .paper{box-shadow:none;border-radius:0;padding:0;}
+  .wgrid{grid-template-columns:repeat(2,1fr);}
+  .kgrid{grid-template-columns:1fr 1fr;}
+  .kpis{grid-template-columns:repeat(4,1fr);}
+  .pagebreak{margin-top:0;}
+  .wp,.notice,.example,.kcard,tr{break-inside:avoid;}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+#confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:30;}
+.piece{position:absolute;top:-24px;width:12px;height:18px;border-radius:3px;animation:fall linear forwards;}
+@keyframes fall{to{transform:translateY(104vh) rotate(640deg);opacity:.9;}}
+
+/* ---------- copyright footer ---------- */
+.sitefoot{text-align:center;font-size:13px;line-height:1.5;color:var(--muted);padding:14px 16px 22px;}
+.sitefoot b{font-family:'Fredoka',sans-serif;font-weight:500;color:var(--purple);}
+@media print{ .sitefoot{font-size:9pt;padding:10px 0 0;color:#666;} }
+</style>
+</head>
+<body class="on-landing">
+
+<header class="topbar noprint">
+  <div class="brandwrap">
+    <button class="home" id="homeBtn" type="button" aria-label="Home"><span class="hi" aria-hidden="true">&#127968;</span>Home</button>
+    <div class="brand" id="brand">Missing Number Detective</div>
+  </div>
+  <div class="dots" id="dots" aria-hidden="true"></div>
+  <div class="count" id="count">Problem 1 of 8</div>
+</header>
+
+<main id="app">
+<!-- ============ LANDING ============ -->
+<section class="landing view" id="landing">
+  <h1 class="big">Missing Number Detective</h1>
+  <div class="hero">
+    <div id="heroMascot"></div>
+    <div class="bubble">
+      <p id="hello">Hi! I'm Pip the owl.</p>
+      <p>Let's be detectives and find the <b>missing number</b>! Watch how it works, then press <b>Let's go</b>.</p>
+      <button class="speak" type="button" id="sayHello">&#128266; Read to me</button>
+    </div>
+  </div>
+
+  <div class="demo" id="demo">
+    <h2>Watch how it works</h2>
+    <div class="demotabs" role="group" aria-label="Choose a demo">
+      <button class="demotab on" type="button" data-d="play" aria-pressed="true">&#129504; How to play</button>
+      <button class="demotab" type="button" data-d="frame" aria-pressed="false">&#128309; Need help?</button>
+      <button class="demotab" type="button" data-d="help" aria-pressed="false">&#128161; If I get stuck</button>
+    </div>
+    <div class="caption" aria-live="polite"><span class="num" id="dNum" aria-hidden="true">1</span><span id="dCap"></span></div>
+    <div class="stage" id="dStage" aria-hidden="true"></div>
+    <div class="dctrl">
+      <button class="sbtn" type="button" id="dBack">&#9664; Back</button>
+      <button class="sbtn go" type="button" id="dNext">Next &#9654;</button>
+      <button class="sbtn" type="button" id="dPlay">&#9654; Play all</button>
+      <button class="sbtn" type="button" id="dSay" aria-label="Read this step to me">&#128266;</button>
+    </div>
+    <div class="dprog" id="dProg" aria-hidden="true"></div>
+  </div>
+
+  <div class="namebox">
+    <label for="nameIn">What's your name?</label>
+    <input id="nameIn" maxlength="20" autocomplete="given-name" placeholder="Type your name">
+  </div>
+  <div class="ndots">8 cases to solve today
+    <div class="row" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+  <button class="btn start" id="startBtn" type="button">Let's go! &#9654;</button>
+
+  <details class="grownups">
+    <summary>For grown-ups</summary>
+    <p>Each set has 8 "missing addend" problems (3 + &#9744; = 8) with totals up to 10. Problems start as mental math. The ten-frame is the first help: it appears after a miss, or when your child taps "Need help?". The mix adapts to recent results. Results stay in this browser only.</p>
+    <div class="row"><span>Ten-frame:</span>
+      <div class="seg" id="tfMode" role="group" aria-label="Ten-frame setting">
+        <button type="button" data-v="help" class="on" aria-pressed="true">Only as help</button>
+        <button type="button" data-v="always" aria-pressed="false">Always show</button>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn ghost sm" type="button" id="lpReport">Parent report</button>
+      <button class="btn ghost sm" type="button" id="lpSheet">Practice sheet</button>
+    </div>
+    <p class="small" id="histNote"></p>
+  </details>
+</section>
+
+<!-- ============ PRACTICE ============ -->
+<div class="view" id="practice" hidden>
+  <div class="card" id="card">
+    <h1 class="kind" id="kind" tabindex="-1">Find the missing number</h1>
+    <p class="hint" id="hint">What number is hiding in the box?</p>
+    <div class="eq" id="eq"></div>
+    <div id="tfArea"></div>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    <div class="coach" id="coach" hidden aria-live="polite"></div>
+    <div class="actions">
+      <button class="btn check" id="checkBtn" type="button">Check my work</button>
+      <button class="btn next" id="nextBtn" type="button" hidden>Next problem</button>
+    </div>
+  </div>
+  <div class="card donescreen" id="doneCard" hidden>
+    <div class="trophy" aria-hidden="true">&#11088;</div>
+    <h1 id="doneTitle" tabindex="-1">All 8 cases solved!</h1>
+    <p id="doneMsg"></p>
+    <div class="stars" id="doneStars"></div>
+    <div class="actions"><button class="btn next" id="againBtn" type="button">Play again</button></div>
+    <div class="grownrow">
+      <span>Grown-ups:</span>
+      <button class="btn ghost sm" type="button" id="dReport">See the report</button>
+      <button class="btn ghost sm" type="button" id="dSheet">Make a practice sheet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ REPORT ============ -->
+<section class="view paperwrap" id="reportView" hidden>
+  <div class="toolbar noprint">
+    <button class="btn ghost sm" type="button" data-back>&larr; Back</button>
+    <button class="btn next sm" type="button" id="printReport">Print / Save as PDF</button>
+    <button class="btn ghost sm" type="button" id="copyReport">Copy as text</button>
+    <button class="btn ghost sm" type="button" id="rpToSheet">Make a practice sheet</button>
+  </div>
+  <div class="paper" id="reportBody"></div>
+  <div class="toolbar noprint" style="margin-top:16px"><button class="btn ghost sm" type="button" id="clearHist">Clear saved history</button></div>
+</section>
+
+<!-- ============ SHEET ============ -->
+<section class="view paperwrap" id="sheetView" hidden>
+  <div class="toolbar noprint">
+    <button class="btn ghost sm" type="button" data-back>&larr; Back</button>
+    <button class="btn next sm" type="button" id="printSheet">Print / Save as PDF</button>
+    <button class="btn ghost sm" type="button" id="newSheet">New problems, same focus</button>
+  </div>
+  <div class="paper sheet" id="sheetBody"></div>
+</section>
+</main>
+
+<footer class="sitefoot">
+  &copy; 2026 <b>Curiosity Engine Interactive</b>. All rights reserved.
+</footer>
+
+<div id="confetti"></div>
+
+<script>
+(function(){
+  "use strict";
+  var N=8;
+  var LS_SESS='missing10.sessions.v1', LS_NAME='missing10.name', LS_TF='missing10.tfmode';
+  function lsGet(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+  function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+  function $(id){ return document.getElementById(id); }
+  function el(t,c){ var e=document.createElement(t); if(c) e.className=c; return e; }
+  function rnd(lo,hi){ return Math.floor(Math.random()*(hi-lo+1))+lo; }
+  function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+  function esc(s){ return String(s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function sum(a,f){ var t=0; a.forEach(function(x){ t+=f(x); }); return t; }
+  function avg(a){ return a.length? a.reduce(function(x,y){return x+y;},0)/a.length : 0; }
+  function probText(r){ return r.a+' + ☐ = '+r.c; }
+  function solvedText(r){ return r.a+' + '+r.m+' = '+r.c; }
+
+  /* ---------------- skills + mistakes ---------------- */
+  var SKILLS={
+    up5:{label:'Totals up to 5'},
+    to9:{label:'Totals 6 to 9'},
+    make10:{label:'Making 10 (number bonds to 10)'},
+    zero:{label:'When the missing number is 0'}
+  };
+  var SKILL_ORDER=['up5','to9','make10','zero'];
+  var SKILL_NEXT={
+    up5:{weak:'Hide-and-seek with 5 small objects: show some, hide the rest under a cup. "I see 2. There are 5 in all. How many are hiding?"',
+         strong:'Small totals are solid.'},
+    to9:{weak:'Count on from the number shown: say it, then count up on fingers to the total. "3... 4, 5, 6, 7, 8. Five fingers!"',
+         strong:'Totals 6 to 9 are going well.'},
+    make10:{weak:'Play "Make 10": hold up some fingers and your child shows the rest to make 10. Drawing ten-frames on paper works great too.',
+         strong:'Number bonds to 10 look secure. These are a big help later for adding and subtracting.'},
+    zero:{weak:'Talk it through: "I have 6. I need 6. Do I need any more?" Zero means nothing more to add.',
+         strong:'They understand that sometimes nothing more is needed (0).'}
+  };
+  var ERR={
+    wrote_total:{title:'Wrote the total instead of the missing part',what:'For a problem like 3 + ☐ = 8, they typed 8.',
+      why:'They may read "=" as "the answer comes next" rather than "is the same amount as".',
+      next:'Use part-part-whole language: "3 and what make 8?" Draw a number bond with 8 on top and 3 and ☐ below.',kid:'The total is the WHOLE. Find the missing PART.'},
+    added:{title:'Added the two numbers shown',what:'For 3 + ☐ = 8, they typed 11 (3 + 8).',
+      why:'Common when kids see a + sign and add everything they see.',
+      next:'Before answering, ask: "Should the missing part be bigger or smaller than the total?"',kid:'The missing part is smaller than the total.'},
+    wrote_given:{title:'Copied the number already shown',what:'For 3 + ☐ = 8, they typed 3.',
+      why:'Often a sign they were unsure what the box was asking for.',
+      next:'Ask "How many MORE do we need?" and point to the empty spots on a ten-frame.',kid:'How many MORE do you need?'},
+    off_by_one:{title:'Off by one when counting on',what:'Their answer was 1 away from the right number.',
+      why:'Usually from counting the starting number too ("3, 4, 5..." and counting the 3).',
+      next:'Practice counting on: say the start number with a fist bump, then count up on fingers. Only the fingers count.',kid:'Say the first number, then count on.'},
+    miscount:{title:'Counting slips',what:'The answer was more than 1 away, but not a typical pattern.',
+      why:'Often from losing track while counting.',
+      next:'Use objects or a drawn ten-frame and touch each one as you count.',kid:'Touch each spot as you count.'},
+    blank:{title:'Left the box empty',what:'They pressed Check before typing.',why:'Usually just rushing.',next:'Remind them to type a number before checking.',kid:'Type a number before you check.'}
+  };
+  var STATUS_LABEL={strong:'Strong',growing:'Growing',focus:'Needs practice',none:'Not tried yet'};
+
+  function skillOf(a,c){ if(a===c) return 'zero'; if(c===10) return 'make10'; return c<=5 ? 'up5' : 'to9'; }
+  function gen(skill){
+    var c,a;
+    if(skill==='up5'){ c=rnd(2,5); a=rnd(1,c-1); }
+    else if(skill==='to9'){ c=rnd(6,9); a=rnd(1,c-1); }
+    else if(skill==='make10'){ c=10; a=rnd(1,9); }
+    else { c=rnd(3,9); a=c; }
+    return {a:a, c:c, m:c-a, skill:skill};
+  }
+  function genUnique(skill, seen){
+    for(var t=0;t<40;t++){ var p=gen(skill), k=p.a+'_'+p.c; if(!seen[k]){ seen[k]=1; return p; } }
+    return gen(skill);
+  }
+
+  /* ---------------- state ---------------- */
+  var state={ i:0, problems:[], p:null, rec:null, session:null, name:'', t0:0, tfMode:lsGet(LS_TF,'help'), returnTo:'landing', frameOn:false, filled:0 };
+  if(state.tfMode!=='always') state.tfMode='help';
+
+  function allSessions(){ var s=lsGet(LS_SESS,[]); return Array.isArray(s)? s.filter(function(x){ return x && x.problems && x.problems.length; }) : []; }
+  function saveSession(){
+    if(!state.session || !state.session.problems.length) return;
+    var all=lsGet(LS_SESS,[]); if(!Array.isArray(all)) all=[];
+    var idx=-1; for(var i=0;i<all.length;i++){ if(all[i] && all[i].id===state.session.id){ idx=i; break; } }
+    if(idx>=0) all[idx]=state.session; else all.push(state.session);
+    if(all.length>40) all=all.slice(-40);
+    lsSet(LS_SESS,all);
+  }
+  function skillStats(sessions){
+    var st={}; SKILL_ORDER.forEach(function(k){ st[k]={opp:0,ok:0,noframe:0,noframeOk:0}; });
+    sessions.forEach(function(s){ s.problems.forEach(function(r){
+      var k=st[r.skill]; if(!k) return; k.opp++; if(r.firstTry && !r.frameOpened) k.ok++;
+      if(!r.frameAtStart){ k.noframe++; if(r.firstTry) k.noframeOk++; }
+    }); });
+    SKILL_ORDER.forEach(function(k){ st[k].m = st[k].opp ? st[k].ok/st[k].opp : null; });
+    return st;
+  }
+  function statusOf(s){ if(!s||!s.opp) return 'none'; if(s.m>=0.8 && s.opp>=2) return 'strong'; if(s.m>=0.5) return 'growing'; return 'focus'; }
+
+  /* adaptive set of 8 */
+  function planSet(){
+    var st=skillStats(allSessions().slice(-5));
+    function m(k){ return st[k].m==null ? 0.6 : st[k].m; }
+    var seen={}, list=[];
+    list.push(genUnique('make10',seen));                 // always some make-10 practice
+    var zeroUsed=false;
+    while(list.length<N){
+      var ks=['up5','to9','make10','zero'];
+      var w=ks.map(function(k){
+        if(k==='zero'){ if(zeroUsed) return 0; return st.zero.opp ? (1-m('zero'))*0.6+0.08 : 0.12; }
+        return (1-m(k))+0.25;
+      });
+      var tot=w.reduce(function(a,b){return a+b;},0), r=Math.random()*tot, j=0;
+      for(;j<ks.length;j++){ r-=w[j]; if(r<=0) break; }
+      var k=ks[Math.min(j,ks.length-1)];
+      if(k==='zero') zeroUsed=true;
+      list.push(genUnique(k,seen));
+    }
+    // shuffle, then start with the gentlest problem
+    for(var i=list.length-1;i>0;i--){ var x=rnd(0,i), t=list[i]; list[i]=list[x]; list[x]=t; }
+    var easiest=0; list.forEach(function(p,i){ if(p.skill!=='zero' && p.c<list[easiest].c) easiest=i; });
+    var e=list.splice(easiest,1)[0]; list.unshift(e);
+    return list;
+  }
+  // Mental math first: the ten-frame is the first level of help (unless a grown-up sets it to always show).
+  function frameVisibleFor(){ return state.tfMode==='always'; }
+
+  /* ---------------- speech + mascot ---------------- */
+  var canSpeak=('speechSynthesis' in window);
+  function speak(t){
+    try{ if(!canSpeak) return; window.speechSynthesis.cancel();
+      var u=new SpeechSynthesisUtterance(String(t).replace(/☐/g,' box ').replace(/\+/g,' plus ').replace(/=/g,' equals ').replace(/−/g,' minus '));
+      u.rate=0.9; window.speechSynthesis.speak(u); }catch(e){}
+  }
+  function mascot(h){
+    return '<svg width="'+Math.round(h*0.82)+'" height="'+h+'" viewBox="0 0 140 170" aria-hidden="true">'+
+      '<path d="M30 52 L36 22 L54 42 Z" fill="#5B3796"/><path d="M110 52 L104 22 L86 42 Z" fill="#5B3796"/>'+
+      '<ellipse cx="70" cy="98" rx="50" ry="60" fill="#7248B4"/>'+
+      '<path d="M24 92 Q2 66 14 44 Q30 64 34 90 Z" fill="#1BA39C"/>'+
+      '<path d="M116 98 Q132 120 120 140 Q106 124 106 102 Z" fill="#1BA39C"/>'+
+      '<ellipse cx="70" cy="120" rx="31" ry="34" fill="#F0E9FA"/>'+
+      '<path d="M56 112 q4 5 8 0 M68 112 q4 5 8 0 M62 124 q4 5 8 0 M74 124 q4 5 8 0 M56 136 q4 5 8 0 M68 136 q4 5 8 0" fill="none" stroke="#C7B5E6" stroke-width="2.5" stroke-linecap="round"/>'+
+      '<circle cx="50" cy="74" r="19" fill="#fff" stroke="#1BA39C" stroke-width="5"/><circle cx="90" cy="74" r="19" fill="#fff" stroke="#1BA39C" stroke-width="5"/>'+
+      '<circle cx="53" cy="76" r="8" fill="#1E2430"/><circle cx="87" cy="76" r="8" fill="#1E2430"/>'+
+      '<circle cx="56" cy="72" r="2.8" fill="#fff"/><circle cx="90" cy="72" r="2.8" fill="#fff"/>'+
+      '<path d="M63 92 L77 92 L70 103 Z" fill="#F2A33A"/>'+
+      '<path d="M52 156 l-6 8 M52 156 l0 9 M52 156 l6 8 M88 156 l-6 8 M88 156 l0 9 M88 156 l6 8" stroke="#F2A33A" stroke-width="4" stroke-linecap="round"/></svg>';
+  }
+  function miniFace(){
+    return '<svg width="42" height="42" viewBox="0 0 42 42" aria-hidden="true">'+
+      '<path d="M6 14 L8 2 L16 9 Z" fill="#5B3796"/><path d="M36 14 L34 2 L26 9 Z" fill="#5B3796"/>'+
+      '<circle cx="21" cy="23" r="18" fill="#7248B4"/>'+
+      '<circle cx="14" cy="20" r="6.5" fill="#fff" stroke="#1BA39C" stroke-width="2.2"/><circle cx="28" cy="20" r="6.5" fill="#fff" stroke="#1BA39C" stroke-width="2.2"/>'+
+      '<circle cx="15" cy="21" r="2.8" fill="#1E2430"/><circle cx="27" cy="21" r="2.8" fill="#1E2430"/>'+
+      '<path d="M18 28 L24 28 L21 33 Z" fill="#F2A33A"/></svg>';
+  }
+
+  /* ---------------- views ---------------- */
+  var firstShow=true;
+  function show(view){
+    ['landing','practice','reportView','sheetView'].forEach(function(v){ $(v).hidden=(v!==view); });
+    document.body.classList.toggle('on-landing', view==='landing');
+    document.body.classList.toggle('on-paper', view==='reportView'||view==='sheetView');
+    window.scrollTo(0,0);
+    if(view==='landing' && window.Demo) window.Demo.refresh();
+    if(!firstShow){ var h=$(view).querySelector('h1'); if(h){ h.setAttribute('tabindex','-1'); try{ h.focus({preventScroll:true}); }catch(e){} } }
+    firstShow=false;
+  }
+
+  var nameIn=$('nameIn');
+  $('heroMascot').innerHTML=mascot(160);
+  nameIn.value=lsGet(LS_NAME,'')||'';
+  function greet(){ var n=nameIn.value.trim(); $('hello').textContent = n ? 'Hi, '+n+'! I\'m Pip the owl.' : 'Hi! I\'m Pip the owl.'; }
+  nameIn.addEventListener('input',greet); greet();
+  if(!canSpeak){ $('sayHello').hidden=true; $('dSay').hidden=true; }
+  $('sayHello').addEventListener('click',function(){ speak($('hello').textContent+' Let\'s be detectives and find the missing number! Watch how it works by pressing Next, then press Let\'s go.'); });
+  function refreshHistNote(){
+    var s=allSessions();
+    $('histNote').textContent = s.length ? s.length+' practice session'+(s.length===1?'':'s')+' saved on this device. Last: '+new Date(s[s.length-1].date).toLocaleDateString()+'.' : 'No sessions saved yet.';
+  }
+  refreshHistNote();
+  function paintSeg(){
+    Array.prototype.forEach.call($('tfMode').querySelectorAll('button'),function(b){
+      var on=b.getAttribute('data-v')===state.tfMode; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on?'true':'false');
+    });
+  }
+  $('tfMode').addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    state.tfMode=b.getAttribute('data-v'); lsSet(LS_TF,state.tfMode); paintSeg();
+  });
+  paintSeg();
+
+  $('startBtn').addEventListener('click',startSession);
+  nameIn.addEventListener('keydown',function(e){ if(e.key==='Enter') startSession(); });
+  function startSession(){
+    state.name=nameIn.value.trim(); lsSet(LS_NAME,state.name);
+    state.problems=planSet(); state.i=0;
+    state.session={id:Date.now(), date:new Date().toISOString(), name:state.name, tfMode:state.tfMode, problems:[]};
+    $('card').hidden=false; $('doneCard').hidden=true;
+    show('practice'); render();
+  }
+  $('homeBtn').addEventListener('click',function(){ try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){} refreshHistNote(); show('landing'); });
+  $('brand').addEventListener('click',function(){ $('homeBtn').click(); });
+
+  /* ---------------- practice ---------------- */
+  var eqEl=$('eq'), tfArea=$('tfArea'), fb=$('feedback'), coach=$('coach'), checkBtn=$('checkBtn'), nextBtn=$('nextBtn');
+  var ansBox=null;
+
+  function renderDots(){
+    var d=$('dots'); d.innerHTML='';
+    for(var k=0;k<N;k++){ var x=el('div','dot'); if(k<state.i) x.classList.add('done'); else if(k===state.i) x.classList.add('now'); d.appendChild(x); }
+    $('count').textContent='Problem '+(state.i+1)+' of '+N;
+  }
+
+  function render(){
+    var p=state.problems[state.i]; state.p=p;
+    var vis=frameVisibleFor(p.skill);
+    state.rec={a:p.a,c:p.c,m:p.m,skill:p.skill,tries:0,firstTry:null,firstAnswer:'',errorCodes:[],firstError:null,hintMax:0,revealed:false,frameAtStart:vis,frameOpened:false,frameTaps:0,ms:0};
+    state.t0=Date.now(); state.filled=0;
+    fb.textContent=''; fb.className='feedback'; coach.hidden=true; coach.innerHTML='';
+    nextBtn.hidden=true; checkBtn.hidden=false;
+    renderDots();
+    eqEl.innerHTML='';
+    var na=el('span','n'); na.textContent=p.a; na.setAttribute('aria-hidden','true');
+    var plus=el('span','sym'); plus.textContent='+'; plus.setAttribute('aria-hidden','true');
+    ansBox=el('input','ansbox'); ansBox.type='text'; ansBox.maxLength=2; ansBox.setAttribute('inputmode','numeric'); ansBox.setAttribute('autocomplete','off');
+    ansBox.setAttribute('aria-label', p.a+' plus what equals '+p.c+'? Type the missing number.');
+    ansBox.addEventListener('input',function(){ this.value=this.value.replace(/[^0-9]/g,'').slice(0,2); this.classList.remove('wrong','shown'); this.removeAttribute('aria-invalid'); });
+    ansBox.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); checkBtn.click(); } });
+    var eqs=el('span','sym'); eqs.textContent='='; eqs.setAttribute('aria-hidden','true');
+    var nc=el('span','n'); nc.textContent=p.c; nc.setAttribute('aria-hidden','true');
+    [na,plus,ansBox,eqs,nc].forEach(function(x){ eqEl.appendChild(x); });
+    state.frameOn=vis;
+    drawFrame();
+    if(state.i>0){ try{ $('kind').focus({preventScroll:true}); }catch(e){} }
+  }
+
+  function drawFrame(){
+    var p=state.p; tfArea.innerHTML='';
+    if(!state.frameOn){
+      var b=el('button','showtf'); b.type='button'; b.innerHTML='&#128161; Need help? Show the ten-frame';
+      b.addEventListener('click',function(){ state.rec.frameOpened=true; if(state.rec.tries===0) state.rec.frameAsked=true; state.frameOn=true; drawFrame(); var f=tfArea.querySelector('.tfc.target'); if(f) f.focus(); });
+      tfArea.appendChild(b); return;
+    }
+    var wrap=el('div','tfwrap');
+    var tf=el('div','tf'); tf.setAttribute('role','group');
+    tf.setAttribute('aria-label','Ten-frame: '+p.a+' blue dots. Spots go up to '+p.c+'.');
+    for(var i=0;i<10;i++){
+      var cell;
+      if(i<p.a){ cell=el('div','tfc have'); cell.innerHTML='<span class="dotc"></span>'; cell.setAttribute('aria-hidden','true'); }
+      else if(i<p.c){
+        cell=el('button','tfc target'); cell.type='button'; cell.innerHTML='<span class="dotc"></span>';
+        (function(c,idx){
+          function label(){ c.setAttribute('aria-label', (c.classList.contains('filled')?'Filled spot ':'Empty spot ')+(idx+1)+'. Tap to '+(c.classList.contains('filled')?'empty':'fill')+'.'); c.setAttribute('aria-pressed', c.classList.contains('filled')?'true':'false'); }
+          label();
+          c.addEventListener('click',function(){
+            c.classList.toggle('filled'); state.rec.frameTaps++;
+            state.filled=tfArea.querySelectorAll('.tfc.target.filled').length;
+            label(); updCount();
+          });
+        })(cell,i);
+      }
+      else { cell=el('div','tfc off'); cell.setAttribute('aria-hidden','true'); }
+      tf.appendChild(cell);
+    }
+    var lg=el('div','tflegend'); lg.setAttribute('aria-hidden','true');
+    lg.innerHTML='<span><i class="lh"></i>we have '+p.a+'</span><span><i class="lt"></i>spots up to '+p.c+'</span><span><i class="lf"></i>you filled</span>';
+    var ct=el('div','tfcount'); ct.id='tfCount'; ct.setAttribute('aria-live','polite');
+    wrap.appendChild(tf); wrap.appendChild(lg); wrap.appendChild(ct);
+    tfArea.appendChild(wrap);
+    updCount();
+  }
+  function updCount(){
+    var ct=$('tfCount'); if(!ct) return;
+    ct.textContent = state.filled ? 'You filled '+state.filled+' spot'+(state.filled===1?'':'s')+'.' : (state.p.m===0 ? '' : 'Tap the empty spots to fill them.');
+  }
+
+  /* diagnosis */
+  function diagnose(p,g){
+    if(g==='') return 'blank';
+    var v=Number(g);
+    if(v===p.m) return null;
+    if(v===p.c) return 'wrote_total';
+    if(v===p.a+p.c) return 'added';
+    if(v===p.a) return 'wrote_given';
+    if(Math.abs(v-p.m)===1) return 'off_by_one';
+    return 'miscount';
+  }
+
+  function hopsHTML(p, numbered){
+    var h='<div class="hops" aria-hidden="true"><span class="hstart">'+p.a+'</span>';
+    for(var k=p.a+1;k<=p.c;k++) h+='<span class="arr">→</span><span class="hop"><b>'+k+'</b><small>'+(numbered?(k-p.a):'')+'</small></span>';
+    return h+'</div>';
+  }
+  function hintFor(p, code, level){
+    var lines=[], extra='';
+    if(level===1){
+      if(p.m===0) lines.push('We already have '+p.a+', and the total is '+p.c+'. Look at the ten-frame: are there any empty spots?');
+      else{
+        if(code==='wrote_total') lines.push(p.c+' is the whole amount. We need the part that goes with '+p.a+'.');
+        else if(code==='added') lines.push('The missing part must be smaller than '+p.c+', because '+p.c+' is the total.');
+        else if(code==='wrote_given') lines.push('We already have '+p.a+'. How many MORE do we need?');
+        else if(code==='off_by_one') lines.push('So close!');
+        lines.push('Use the ten-frame: the blue dots are the '+p.a+' we have. Tap the dashed spots to fill up to '+p.c+'. How many did you fill?');
+      }
+    }else if(level===2){
+      if(p.m===0){ lines.push('We have '+p.a+'. The total is '+p.c+'. How many more do we need to add?'); }
+      else{
+        lines.push('Count on! Say '+p.a+' (don’t count it). Then hop to '+p.c+' and hold up a finger for each hop. How many hops?');
+        extra=hopsHTML(p,false);
+      }
+    }else{
+      if(p.m===0){ lines.push(p.a+' + 0 = '+p.c+'. We didn’t need any more. Type 0.'); }
+      else{
+        lines.push('After '+p.a+' we count '+range(p.a+1,p.c).join(', ')+'. That’s '+p.m+' hop'+(p.m===1?'':'s')+'.');
+        lines.push(p.a+' + '+p.m+' = '+p.c+'. Type '+p.m+'.');
+        extra=hopsHTML(p,true);
+      }
+    }
+    return {lines:lines, extra:extra};
+  }
+  function range(a,b){ var r=[]; for(var i=a;i<=b;i++) r.push(i); return r; }
+
+  function showCoach(p, code, level){
+    var titles={1:'Help: use the ten-frame',2:'Help: count on',3:'Let’s do it together'};
+    var hc=hintFor(p,code,level);
+    var h='<div class="face">'+miniFace()+'</div><div class="body"><p class="lvl">'+titles[level]+'</p>';
+    hc.lines.forEach(function(l){ h+='<p>'+esc(l)+'</p>'; });
+    h+=hc.extra+'<div class="tools">';
+    if(canSpeak) h+='<button class="sbtn" type="button" id="coachSay">&#128266; Read to me</button>';
+    if(level===3) h+='<button class="sbtn fill" type="button" id="coachFill">Show me the answer</button>';
+    h+='</div></div>';
+    coach.innerHTML=h; coach.hidden=false;
+    var s=$('coachSay'); if(s) s.addEventListener('click',function(){ speak(hc.lines.join(' ')); });
+    var f=$('coachFill'); if(f) f.addEventListener('click',function(){
+      ansBox.value=String(p.m); ansBox.classList.remove('wrong'); ansBox.classList.add('shown'); state.rec.revealed=true;
+      if(state.frameOn){ Array.prototype.forEach.call(tfArea.querySelectorAll('.tfc.target'),function(c){ c.classList.add('filled'); }); state.filled=p.m; updCount(); }
+      f.disabled=true; f.textContent='Now press Check'; checkBtn.focus();
+    });
+  }
+
+  checkBtn.addEventListener('click',function(){
+    var p=state.p, rec=state.rec, g=ansBox.value.trim();
+    if(g===''){ fb.className='feedback fix'; fb.textContent='Type a number in the box first!'; ansBox.focus(); return; }
+    var code=diagnose(p,g); rec.tries++;
+    if(rec.firstTry===null){ rec.firstTry=(code===null); rec.firstAnswer=g; rec.firstError=code; }
+    if(code===null){
+      rec.ms=Date.now()-state.t0;
+      state.session.problems.push(rec); saveSession();
+      ansBox.classList.remove('wrong','shown'); ansBox.classList.add('good'); ansBox.setAttribute('aria-invalid','false');
+      coach.hidden=true;
+      fb.className='feedback good';
+      var msg = rec.tries===1 ? pick(['Nailed it!','That’s exactly right!','You found it!','Super counting!','Right on!']) : pick(['You fixed it! That’s real thinking.','You found it and fixed it!','Great job sticking with it!']);
+      if(state.name && Math.random()<0.4) msg=msg.replace(/[!.]$/,', '+state.name+'!');
+      fb.textContent=msg + ' ' + solvedText(p) + '.';
+      checkBtn.hidden=true; nextBtn.hidden=false; nextBtn.textContent=(state.i===N-1)?'See my stars':'Next problem';
+      confetti(); nextBtn.focus();
+    }else{
+      if(rec.errorCodes.indexOf(code)<0) rec.errorCodes.push(code);
+      var level=Math.min(rec.tries,3); rec.hintMax=Math.max(rec.hintMax,level);
+      ansBox.classList.add('wrong'); ansBox.setAttribute('aria-invalid','true');
+      fb.className='feedback fix';
+      fb.textContent = level===1 ? 'Not quite. The ten-frame can help!' : level===2 ? 'Let’s count on.' : 'No worries, we’ll do it together.';
+      if(!state.frameOn){ state.frameOn=true; rec.frameOpened=true; drawFrame(); }
+      showCoach(p,code,level);
+      ansBox.focus(); ansBox.select();
+    }
+  });
+  nextBtn.addEventListener('click',function(){ state.i++; if(state.i>N-1) finish(); else render(); });
+
+  function finish(){
+    $('card').hidden=true; $('doneCard').hidden=false;
+    var recs=state.session.problems, first=recs.filter(function(r){ return r.firstTry; }).length;
+    $('doneTitle').textContent = state.name ? 'All 8 cases solved, '+state.name+'!' : 'All 8 cases solved!';
+    $('doneMsg').textContent = first===N ? 'Every single one on the first try. Wow!' : 'You got '+first+' on the first try and kept going on the rest. That’s how brains grow!';
+    var h='';
+    recs.forEach(function(r){
+      var cls=r.firstTry?'':(r.revealed?'together':'fixed');
+      var icon=r.firstTry?'⭐':(r.revealed?'🤝':'💪');
+      var lab=r.firstTry?'First try!':(r.revealed?'Did it together':'Fixed it!');
+      h+='<div class="starchip '+cls+'"><span class="s" aria-hidden="true">'+icon+'</span>'+esc(solvedText(r))+'<br><b>'+lab+'</b></div>';
+    });
+    $('doneStars').innerHTML=h;
+    var d=$('dots'); d.innerHTML=''; for(var k=0;k<N;k++) d.appendChild(el('div','dot done'));
+    $('count').textContent='Finished';
+    confetti();
+    try{ $('doneTitle').focus({preventScroll:true}); }catch(e){}
+  }
+  $('againBtn').addEventListener('click',startSession);
+
+  function confetti(){
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var box=$('confetti'), colors=['#157A4A','#1F5BB5','#7248B4','#4FC08D','#1BA39C'];
+    for(var i=0;i<60;i++){ var d=el('div','piece'); d.style.left=(Math.random()*100)+'%'; d.style.background=pick(colors);
+      d.style.animationDelay=(Math.random()*0.45)+'s'; d.style.animationDuration=(1.5+Math.random()*1.3)+'s'; box.appendChild(d); }
+    setTimeout(function(){ box.innerHTML=''; },3400);
+  }
+
+  /* ---------------- report ---------------- */
+  function fmtDate(iso){ return new Date(iso).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'}); }
+  function tally(sessions){
+    var t={};
+    sessions.forEach(function(s){ s.problems.forEach(function(r){ (r.errorCodes||[]).forEach(function(c){
+      if(!t[c]) t[c]={count:0,ex:null}; t[c].count++;
+      if(!t[c].ex && r.firstError===c) t[c].ex=r;
+      if(!t[c].ex) t[c].ex=r;
+    }); }); });
+    return t;
+  }
+  function reportData(){
+    var all=allSessions(); if(!all.length) return null;
+    var cur=all[all.length-1], recent=all.slice(-5), recs=cur.problems;
+    var d={all:all,cur:cur,recent:recent,recs:recs,name:cur.name||'',who:cur.name||'Your child',n:recs.length,
+      first:recs.filter(function(r){return r.firstTry;}).length,
+      fixed:recs.filter(function(r){return !r.firstTry&&!r.revealed;}).length,
+      shown:recs.filter(function(r){return r.revealed;}).length,
+      hinted:recs.filter(function(r){return r.hintMax>0;}).length,
+      mins:Math.max(1,Math.round(sum(recs,function(r){return r.ms||0;})/60000)),
+      solo:recs.filter(function(r){return r.firstTry && !r.frameOpened;}).length,
+      tfHelp:recs.filter(function(r){return r.frameOpened;}).length,
+      avgSec:Math.round(sum(recs.filter(function(r){return r.firstTry;}),function(r){return r.ms||0;})/Math.max(1,recs.filter(function(r){return r.firstTry;}).length)/1000),
+      stNow:skillStats([cur]),stRec:skillStats(recent),errNow:tally([cur])};
+    var tried=SKILL_ORDER.filter(function(k){return d.stRec[k].opp>0;});
+    d.strengths=tried.filter(function(k){return statusOf(d.stRec[k])==='strong';});
+    d.focus=tried.filter(function(k){return statusOf(d.stRec[k])!=='strong';}).sort(function(a,b){return d.stRec[a].m-d.stRec[b].m;});
+    d.errOrder=Object.keys(d.errNow).sort(function(a,b){return d.errNow[b].count-d.errNow[a].count;});
+    return d;
+  }
+  function summarySentence(d){
+    var s=d.who+' found '+d.first+' of '+d.n+' missing numbers on the first try';
+    var x=[]; if(d.fixed) x.push('fixed '+d.fixed+' after a thinking hint'); if(d.shown) x.push('worked through '+d.shown+' with full support');
+    s+= x.length ? ', '+x.join(', and ')+'.' : '.';
+    s+=' '+d.solo+' of '+d.n+' were solved in their head with no help at all.';
+    if(d.tfHelp) s+=' The ten-frame came out to help on '+d.tfHelp+'.';
+    if(d.strengths.length) s+=' Strongest: '+d.strengths.map(function(k){return SKILLS[k].label.toLowerCase();}).join('; ')+'.';
+    s+= d.focus.length ? ' Next focus: '+SKILLS[d.focus[0]].label.toLowerCase()+'.' : ' No weak spots showed up recently.';
+    return s;
+  }
+  function nextSteps(d){
+    var out=[];
+    d.focus.slice(0,2).forEach(function(k){ out.push(SKILL_NEXT[k].weak); });
+    d.errOrder.slice(0,2).forEach(function(c){ if(out.indexOf(ERR[c].next)<0) out.push(ERR[c].next); });
+    if(d.strengths.length) out.push('Celebrate what’s working: '+SKILL_NEXT[d.strengths[0]].strong);
+    if(!d.focus.length) out.push('Ready to stretch: try the same idea with totals to 20, or with the box in the first spot (☐ + 5 = 9).');
+    out.push('Print the personalized practice sheet: 7 problems target the focus skills and 3 keep strengths warm.');
+    return out;
+  }
+  function renderReport(){
+    var box=$('reportBody'), d=reportData();
+    if(!d){ box.innerHTML='<div class="rp-empty">No practice saved yet. Finish at least one problem and the report will appear here.</div>'; return; }
+    var h='<h1>'+esc(d.name? d.name+'’s':'Your Child’s')+' Missing Number Detective Report</h1>';
+    h+='<p class="meta">Session: '+esc(fmtDate(d.cur.date))+' · Ten-frame: '+(d.cur.tfMode==='always'?'always shown':'used as first help')+' · '+d.all.length+' session'+(d.all.length===1?'':'s')+' saved on this device</p>';
+    h+='<div class="kpis"><div class="kpi"><b>'+d.first+' / '+d.n+'</b><span>right on the first try</span></div>'+
+       '<div class="kpi"><b>'+d.hinted+'</b><span>needed a hint</span></div>'+
+       '<div class="kpi"><b>'+d.solo+' / '+d.n+'</b><span>solved in their head, no help</span></div>'+
+       '<div class="kpi"><b>'+d.avgSec+' sec</b><span>average time when right first try</span></div></div>';
+    h+='<div class="summary">'+esc(summarySentence(d))+'</div>';
+    h+='<h2>Skills</h2><table><thead><tr><th>Skill</th><th>This session</th><th>Last '+d.recent.length+' session'+(d.recent.length===1?'':'s')+'</th><th style="width:140px"><span class="sr-only">Progress bar</span></th><th>Status</th></tr></thead><tbody>';
+    SKILL_ORDER.forEach(function(k){
+      var n=d.stNow[k], r=d.stRec[k]; if(!r.opp) return; var stt=statusOf(r);
+      h+='<tr><td>'+esc(SKILLS[k].label)+'</td><td>'+(n.opp?n.ok+' / '+n.opp:'—')+'</td><td>'+r.ok+' / '+r.opp+'</td><td><div class="bar" aria-hidden="true"><i style="width:'+Math.round(r.m*100)+'%"></i></div></td><td><span class="pillst '+stt+'">'+STATUS_LABEL[stt]+'</span></td></tr>';
+    });
+    h+='</tbody></table><p class="small">A skill counts as correct when it was solved on the first try without opening the ten-frame (mental math). "Strong" means 80%+ with at least 2 tries.</p>';
+    h+='<h2>What we noticed</h2>';
+    if(!d.errOrder.length) h+='<p>No mistakes this session. Every problem was right on the first try.</p>';
+    d.errOrder.forEach(function(c){ var e=ERR[c], t=d.errNow[c], r=t.ex;
+      h+='<div class="notice"><b>'+esc(e.title)+' ('+t.count+' problem'+(t.count===1?'':'s')+')</b>'+esc(e.what)+' '+esc(e.why)+
+        (r?'<div class="ex">Example: '+esc(probText(r))+' — first answer '+esc(r.firstAnswer||'(blank)')+', correct answer '+r.m+'.</div>':'')+'</div>'; });
+    h+='<h2>Next steps at home</h2><ol>'; nextSteps(d).forEach(function(s){ h+='<li>'+esc(s)+'</li>'; }); h+='</ol>';
+    h+='<h2>Problem by problem</h2><table><thead><tr><th>#</th><th>Problem</th><th>First answer</th><th>Tries</th><th>Ten-frame</th><th>Support used</th><th>Result</th></tr></thead><tbody>';
+    d.recs.forEach(function(r,i){
+      var sup=[]; if(r.hintMax) sup.push(['','ten-frame','count-on hops','walk-through'][r.hintMax]); if(r.revealed) sup.push('answer shown');
+      var tfu = r.frameAsked ? 'asked for it' : (r.frameOpened ? 'opened after a miss' : (r.frameAtStart ? 'always shown' : 'not needed'));
+      h+='<tr><td>'+(i+1)+'</td><td>'+esc(solvedText(r))+'</td><td>'+esc(r.firstAnswer)+'</td><td>'+r.tries+'</td><td>'+tfu+'</td><td>'+esc(sup.join(', ')||'none')+'</td><td>'+(r.firstTry?'✔ First try':(r.revealed?'Solved with full support':'Fixed after hint'))+'</td></tr>';
+    });
+    h+='</tbody></table>';
+    var hist=d.all.slice(-8);
+    if(hist.length>1){
+      h+='<h2>Progress over time</h2><table><thead><tr><th>Date</th><th>First-try correct</th><th style="width:200px"><span class="sr-only">Progress bar</span></th></tr></thead><tbody>';
+      hist.forEach(function(s){ var f=s.problems.filter(function(r){return r.firstTry;}).length, n=s.problems.length;
+        h+='<tr><td>'+esc(fmtDate(s.date))+'</td><td>'+f+' / '+n+'</td><td><div class="bar" aria-hidden="true"><i style="width:'+Math.round(f/n*100)+'%"></i></div></td></tr>'; });
+      h+='</tbody></table>';
+    }
+    h+='<p class="small" style="margin-top:18px">Generated by Missing Number Detective. Results are stored only in this browser.</p>';
+    box.innerHTML=h;
+  }
+  function reportText(){
+    var d=reportData(); if(!d) return 'No practice saved yet.';
+    var L=[(d.name?d.name+'’s ':'')+'Missing Number Detective Report — '+fmtDate(d.cur.date),'',summarySentence(d),'','SKILLS (last '+d.recent.length+' sessions)'];
+    SKILL_ORDER.forEach(function(k){ var r=d.stRec[k]; if(r.opp) L.push('- '+SKILLS[k].label+': '+r.ok+'/'+r.opp+' ('+STATUS_LABEL[statusOf(r)]+')'); });
+    if(d.errOrder.length){ L.push('','WHAT WE NOTICED'); d.errOrder.forEach(function(c){ L.push('- '+ERR[c].title+' ('+d.errNow[c].count+')'); }); }
+    L.push('','NEXT STEPS'); nextSteps(d).forEach(function(s,i){ L.push((i+1)+'. '+s); });
+    return L.join('\n');
+  }
+  function openReport(from){ state.returnTo=from; renderReport(); resetClear(); show('reportView'); }
+  $('printReport').addEventListener('click',function(){ window.print(); });
+  $('copyReport').addEventListener('click',function(){
+    var btn=this, txt=reportText();
+    function done(){ btn.textContent='Copied!'; setTimeout(function(){ btn.textContent='Copy as text'; },1800); }
+    function fallback(){ var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){} document.body.removeChild(ta); }
+    try{ if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done,fallback); else fallback(); }catch(e){ fallback(); }
+  });
+  var clearArmed=false;
+  function resetClear(){ clearArmed=false; var b=$('clearHist'); b.textContent='Clear saved history'; b.classList.remove('danger'); }
+  $('clearHist').addEventListener('click',function(){
+    if(!clearArmed){ clearArmed=true; this.textContent='Tap again to erase all saved sessions'; this.classList.add('danger'); return; }
+    lsDel(LS_SESS); resetClear(); renderReport(); refreshHistNote();
+  });
+
+  /* ---------------- practice sheet ---------------- */
+  function ptf(p, mode){            // mode: 'scaffold' (blue + dashed targets) | 'solved' (blue + green)
+    var h='<div class="ptf" aria-hidden="true">';
+    for(var i=0;i<10;i++){
+      var c = i<p.a ? 'h' : (i<p.c ? (mode==='solved'?'f':'t') : 'o');
+      h+='<div class="'+c+'"></div>';
+    }
+    return h+'</div>';
+  }
+  function peq(p, key){
+    return '<div class="peq"><span class="n">'+p.a+'</span><span class="sym">+</span><span class="pb'+(key?' key':'')+'">'+(key?p.m:'')+'</span><span class="sym">=</span><span class="n">'+p.c+'</span></div>';
+  }
+  function steps(p){
+    if(p.m===0) return ['We have '+p.a+'. The total is '+p.c+'.','Nothing more is needed.','Answer: 0, because '+p.a+' + 0 = '+p.c+'.'];
+    var s=['We have '+p.a+' (blue dots). The total is '+p.c+'.'];
+    s.push('Count on from '+p.a+': '+range(p.a+1,p.c).join(', ')+'. That’s '+p.m+'.');
+    if(p.c===10) s.push('Ten-frame trick: '+(10-p.a)+' empty spots make 10.');
+    s.push('Check: '+p.a+' + '+p.m+' = '+p.c+'. Related fact: '+p.c+' − '+p.a+' = '+p.m+'.');
+    return s;
+  }
+  function sheetPlan(){
+    var all=allSessions(); if(!all.length) return null;
+    var st=skillStats(all.slice(-3));
+    var tried=SKILL_ORDER.filter(function(k){return st[k].opp>0;});
+    var weak=tried.filter(function(k){return statusOf(st[k])!=='strong';}).sort(function(a,b){return st[a].m-st[b].m;}).slice(0,3);
+    var strong=tried.filter(function(k){return statusOf(st[k])==='strong';});
+    var stretch=false;
+    if(!weak.length){ stretch=true; weak=['make10','to9']; }
+    var w=weak.map(function(k){ return (st[k].m!=null?1-st[k].m:0.5)+0.15; });
+    var counts=weak.map(function(){return 1;}), left=7-weak.length;
+    while(left>0){ var tot=w.reduce(function(a,b){return a+b;},0), r=Math.random()*tot, j=0; for(;j<w.length;j++){ r-=w[j]; if(r<=0) break; } counts[Math.min(j,w.length-1)]++; left--; }
+    if(weak.indexOf('zero')>=0){ var zi=weak.indexOf('zero'); var extra=counts[zi]-2; if(extra>0){ counts[zi]=2; counts[zi===0?1%weak.length:0]+=extra; } }
+    var warmKeys = strong.filter(function(k){return k!=='zero';}); if(!warmKeys.length) warmKeys=['up5'];
+    var seen={};
+    var warm=[0,1,2].map(function(i){ var k=warmKeys[i%warmKeys.length]; return {p:genUnique(k,seen),key:k,tag:'warm'}; });
+    var focus=[]; weak.forEach(function(k,i){ for(var c=0;c<counts[i];c++) focus.push({p:genUnique(k,seen),key:k,tag:'focus'}); });
+    var codes=Object.keys(tally(all.slice(-3))).filter(function(c){return c!=='blank';});
+    return {name:all[all.length-1].name||'',weak:weak,warmKeys:warmKeys,stretch:stretch,problems:[warm[0],warm[1]].concat(focus,[warm[2]]),codes:codes,example:genUnique(weak[0]==='zero'&&weak[1]?weak[1]:weak[0],seen)};
+  }
+  var currentSheet=null;
+  function renderSheet(regen){
+    var box=$('sheetBody'); if(regen||!currentSheet) currentSheet=sheetPlan(); var S=currentSheet;
+    if(!S){ box.innerHTML='<div class="rp-empty">Finish a practice set first. The sheet is built from how your child did.</div>'; $('newSheet').hidden=true; return; }
+    $('newSheet').hidden=false;
+    var h='<div class="sh-head"><div><h1>Missing Number Detective: Practice Sheet</h1><p class="focusline"><b>Focus:</b> '+esc(S.weak.map(function(k){return SKILLS[k].label;}).join(' · '))+(S.stretch?' (stretch: everything recent looked strong!)':'')+
+      '<br><b>Keep strong:</b> '+esc(S.warmKeys.map(function(k){return SKILLS[k].label;}).join(' · '))+'</p></div><div class="nm">Name: <span>'+esc(S.name)+'</span><br>Date: <span></span></div></div>';
+    var tips=['Say the first number, then count on.'].concat(S.codes.slice(0,2).map(function(c){return ERR[c].kid;}));
+    h+='<div class="remember"><b>Remember:</b> '+esc(tips.join('  •  '))+' Draw dots in the empty spots to help!</div>';
+    var ex=S.example;
+    h+='<div class="example"><div>'+peq(ex,true)+ptf(ex,'solved')+'</div><div><p class="exlabel">Worked example: '+esc(SKILLS[ex.skill].label)+'</p><ol>';
+    steps(ex).forEach(function(s){ h+='<li>'+esc(s)+'</li>'; }); h+='</ol></div></div>';
+    function card(it,i){
+      var tag=it.tag==='warm'?(i===S.problems.length-1?'finish strong':'warm-up'):'focus';
+      var body = it.tag==='focus' ? ptf(it.p,'scaffold') : '<div class="writeline"><small>Work space</small></div>';
+      return '<div class="wp"><div class="wph"><b>'+(i+1)+'</b><span class="tag '+(it.tag==='warm'?'warm':'focus')+'">'+tag+'</span></div>'+peq(it.p,false)+body+'</div>';
+    }
+    h+='<div class="wgrid">'; S.problems.slice(0,6).forEach(function(it,i){ h+=card(it,i); }); h+='</div>';
+    h+='<div class="pagebreak"><div class="contd"><h2>Keep going!</h2><div class="nm">Name: <span>'+esc(S.name)+'</span></div></div><div class="wgrid">';
+    S.problems.slice(6).forEach(function(it,k){ h+=card(it,k+6); });
+    h+='</div><p class="small" style="margin-top:12px">Blue dots are the number you have. Draw dots in the dashed spots to reach the total, then count what you drew. Striped spots are not used.</p></div>';
+    h+='<div class="pagebreak"><h2 style="margin-top:0">Answer key with worked solutions (for grown-ups)</h2><p class="small">Problems 1, 2 and 10 keep strengths warm. Problems 3–9 target the focus skills, weighted toward the weakest. If your child gets stuck, ask "How many MORE do we need?" before showing a solution.</p><div class="kgrid">';
+    S.problems.forEach(function(it,i){
+      h+='<div class="kcard"><div>'+ptf(it.p,'solved')+'</div><div><h3>'+(i+1)+'. '+esc(solvedText(it.p))+'</h3><ol>';
+      steps(it.p).forEach(function(s){ h+='<li>'+esc(s)+'</li>'; });
+      h+='</ol><p class="sk">'+esc(SKILLS[it.key].label)+'</p></div></div>';
+    });
+    h+='</div>';
+    if(S.codes.length){ h+='<h2 style="margin-top:12px">What to watch for</h2><ul class="keywatch">'; S.codes.slice(0,3).forEach(function(c){ h+='<li><b>'+esc(ERR[c].title)+'.</b> '+esc(ERR[c].next)+'</li>'; }); h+='</ul>'; }
+    h+='</div>';
+    box.innerHTML=h;
+  }
+  function openSheet(from){ state.returnTo=from; renderSheet(true); show('sheetView'); }
+  $('printSheet').addEventListener('click',function(){ window.print(); });
+  $('newSheet').addEventListener('click',function(){ renderSheet(true); });
+  $('lpReport').addEventListener('click',function(){ openReport('landing'); });
+  $('lpSheet').addEventListener('click',function(){ openSheet('landing'); });
+  $('dReport').addEventListener('click',function(){ openReport('practice'); });
+  $('dSheet').addEventListener('click',function(){ openSheet('practice'); });
+  $('rpToSheet').addEventListener('click',function(){ openSheet(state.returnTo); });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-back]'),function(b){
+    b.addEventListener('click',function(){ refreshHistNote(); show(state.returnTo==='practice'?'practice':'landing'); });
+  });
+
+  /* ---------------- landing demo ---------------- */
+  (function(){
+    var DEMOS={
+      play:{a:6,c:9,steps:[
+        {say:'Read it: 6 plus <b>what</b> makes 9?', hl:['a','c'], pt:'box'},
+        {say:'Think it in your head. Say <b>6</b>, then count on: <b>7, 8, 9</b>.', hl:['a'], hops:true, pt:'hops'},
+        {say:'That’s <b>3</b>! Type 3 in the box.', hops:true, ans:'3', pt:'box'},
+        {say:'Press <b>Check my work</b>. Green means you got it!', ans:'3', good:true, fb:'You found it! 6 + 3 = 9.', pt:'check'}
+      ]},
+      frame:{a:3,c:8,steps:[
+        {say:'Not sure? Tap <b>Need help?</b> to bring out the ten-frame.', showbtn:true, pt:'showbtn'},
+        {say:'The <b>blue dots</b> are the 3 you already have.', frame:true, pt:'have'},
+        {say:'Tap the <b>dashed spots</b> to fill up to 8.', frame:true, fill:5, pt:'target'},
+        {say:'You filled <b>5</b> spots! Type <b>5</b> in the box.', frame:true, fill:5, ans:'5', pt:'box'},
+        {say:'Press <b>Check my work</b>. 3 + 5 = 8!', frame:true, fill:5, ans:'5', good:true, fb:'Nailed it! 3 + 5 = 8.', pt:'check'}
+      ]},
+      help:{a:4,c:10,steps:[
+        {say:'Oops happens! Say you typed <b>10</b> and pressed Check.', ans:'10', pt:'check'},
+        {say:'A <b>red box</b> means try again. The <b>ten-frame</b> pops out to help!', ans:'10', wrong:true, frame:true, coach:'<b class="t">Help: use the ten-frame</b>10 is the whole amount. Tap the dashed spots to fill up to 10. How many?', pt:'target'},
+        {say:'Still stuck? Press Check again and Pip shows you how to <b>count on</b>.', ans:'10', wrong:true, frame:true, hops:true, coach:'<b class="t">Help: count on</b>Say 4, then hop to 10. How many hops?', pt:'hops'},
+        {say:'6 hops! Type <b>6</b> and press Check. <b>You fixed it!</b>', frame:true, fill:6, ans:'6', good:true, fb:'You fixed it! 4 + 6 = 10.', pt:'check'},
+        {say:'Need a break? The <b>🏠 Home</b> button at the top brings you back here.', pt:'none'}
+      ]}
+    };
+    var cur='play', idx=0, timer=null, finger=null;
+    var stage=$('dStage'), cap=$('dCap'), num=$('dNum'), prog=$('dProg');
+    function draw(){
+      var d=DEMOS[cur], s=d.steps[idx], a=d.a, c=d.c;
+      var hl=s.hl||[];
+      var box='<div class="dbox'+(s.ans?' filled':'')+(s.wrong?' wrong':'')+(s.good?' good':'')+'" data-k="box">'+(s.ans||'')+'</div>';
+      var left='<div class="sleft"><div class="deq"><span class="n'+(hl.indexOf('a')>=0?' hl':'')+'" data-k="a">'+a+'</span><span class="sym">+</span>'+box+'<span class="sym">=</span><span class="n'+(hl.indexOf('c')>=0?' hl':'')+'" data-k="c">'+c+'</span></div>';
+      if(s.frame){
+        left+='<div class="tf">';
+        var f=s.fill||0;
+        for(var i=0;i<10;i++){
+          if(i<a) left+='<div class="tfc have"'+(i===0?' data-k="have"':'')+'><span class="dotc"></span></div>';
+          else if(i<c) left+='<div class="tfc target'+(i-a<f?' filled':'')+'"'+(i===a?' data-k="target"':'')+'><span class="dotc"></span></div>';
+          else left+='<div class="tfc off"></div>';
+        }
+        left+='</div>';
+      }
+      if(s.hops){ var hh='<div class="hops" data-k="hops"><span class="hstart">'+a+'</span>'; for(var k=a+1;k<=c;k++) hh+='<span class="arr">→</span><span class="hop"><b>'+k+'</b><small>'+(k-a)+'</small></span>'; left+=hh+'</div>'; }
+      if(s.showbtn) left+='<div class="showtf" data-k="showbtn" style="display:inline-block">&#128161; Need help? Show the ten-frame</div>';
+      left+='<div class="dcheck" data-k="check">Check my work</div><div class="dfb">'+(s.fb||'')+'</div></div>';
+      var hasCoach=d.steps.some(function(x){return !!x.coach;});
+      var right=hasCoach ? '<div class="sright">'+(s.coach?'<div class="dcoach">'+s.coach+'</div>':'')+'</div>' : '';
+      var old=finger?{l:finger.style.left,t:finger.style.top}:null;
+      stage.innerHTML=left+right+'<div class="finger">👆</div>';
+      finger=stage.querySelector('.finger'); if(old){ finger.style.left=old.l; finger.style.top=old.t; }
+      cap.innerHTML=s.say; num.textContent=idx+1;
+      var pg=''; for(var j=0;j<d.steps.length;j++) pg+='<i'+(j===idx?' class="on"':'')+'></i>'; prog.innerHTML=pg;
+      $('dBack').disabled=idx===0; $('dNext').innerHTML= idx===d.steps.length-1 ? 'Again ↺' : 'Next ▶';
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ pointAt(s.pt); }); });
+    }
+    function pointAt(key){
+      var t=key&&key!=='none'?stage.querySelector('[data-k="'+key+'"]'):null;
+      if(!t){ finger.style.opacity='0'; return; }
+      var sr=stage.getBoundingClientRect(), r=t.getBoundingClientRect();
+      finger.style.opacity='1'; finger.style.left=(r.left-sr.left+r.width/2-6)+'px'; finger.style.top=(r.top-sr.top+r.height*0.75)+'px';
+      finger.classList.remove('tap'); void finger.offsetWidth; finger.classList.add('tap');
+    }
+    function go(i){ var n=DEMOS[cur].steps.length; idx=(i+n)%n; draw(); }
+    function stop(){ if(timer){ clearInterval(timer); timer=null; } $('dPlay').innerHTML='▶ Play all'; }
+    $('dNext').addEventListener('click',function(){ stop(); go(idx+1); });
+    $('dBack').addEventListener('click',function(){ stop(); if(idx>0) go(idx-1); });
+    $('dSay').addEventListener('click',function(){ speak(cap.textContent); });
+    $('dPlay').addEventListener('click',function(){
+      if(timer){ stop(); return; }
+      if(idx===DEMOS[cur].steps.length-1) go(0);
+      this.innerHTML='⏸ Pause';
+      timer=setInterval(function(){ if(idx>=DEMOS[cur].steps.length-1){ stop(); return; } go(idx+1); },3600);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.demotab'),function(b){
+      b.addEventListener('click',function(){
+        stop();
+        Array.prototype.forEach.call(document.querySelectorAll('.demotab'),function(x){ x.classList.toggle('on',x===b); x.setAttribute('aria-pressed',x===b?'true':'false'); });
+        cur=b.getAttribute('data-d'); idx=0; finger=null; draw();
+      });
+    });
+    var rsz=null;
+    window.addEventListener('resize',function(){ clearTimeout(rsz); rsz=setTimeout(function(){ if(!$('landing').hidden&&finger) pointAt(DEMOS[cur].steps[idx].pt); },150); });
+    window.Demo={refresh:function(){ stop(); draw(); }};
+    draw();
+  })();
+
+  show('landing');
+})();
+</script>
+</body>
+</html>
