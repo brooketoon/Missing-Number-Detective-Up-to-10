@@ -277,12 +277,12 @@ body.on-paper .dots, body.on-paper .count{display:none;}
 .howto b.nx{display:inline;}
 .once{font-size:13.5px;margin:8px 0;}
 /* printable formats */
-.pbond{position:relative;width:170px;height:140px;margin:4px auto 6px;}
+.pbond{position:relative;width:150px;height:120px;margin:2px auto 4px;}
 .pbond svg{position:absolute;left:0;top:0;}
-.pbond .c{position:absolute;width:52px;height:52px;border-radius:50%;border:2.5px solid var(--purple);background:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;}
-.pbond .c.w{left:59px;top:0;background:var(--purple-soft);}
-.pbond .c.l{left:4px;top:84px;}
-.pbond .c.r{left:114px;top:84px;}
+.pbond .c{position:absolute;width:46px;height:46px;border-radius:50%;border:2.5px solid var(--purple);background:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;}
+.pbond .c.w{left:52px;top:0;background:var(--purple-soft);}
+.pbond .c.l{left:4px;top:72px;}
+.pbond .c.r{left:100px;top:72px;}
 .pbond .c.miss{border-color:#9A93A8;color:var(--blue);}
 .pbond .c.miss.k{border-color:var(--blue);}
 .ppic{text-align:center;margin:4px 0 6px;font-size:13.5px;}
@@ -345,6 +345,29 @@ body.on-paper .dots, body.on-paper .count{display:none;}
   .kpis{grid-template-columns:repeat(4,1fr);}
   .pagebreak{margin-top:0;}
   .wp,.notice,.example,.kcard,tr{break-inside:avoid;}
+  /* keep the practice part to exactly 2 pages: problems 1-6, then 7-10 */
+  .sh-head h1{font-size:22px;}
+  .focusline{font-size:12px;margin-top:3px;}
+  .remember{margin:6px 0;padding:5px 10px;font-size:13px;}
+  .example{margin:6px 0 8px;padding:6px 12px;}
+  .example .peq .n{font-size:30px;} .example .peq .sym{font-size:26px;} .example .peq .pb{width:42px;height:42px;font-size:26px;}
+  .example .ptf{grid-template-columns:repeat(5,22px);grid-template-rows:repeat(2,22px);}
+  .example .ptf .h::before,.example .ptf .f::before{width:15px;height:15px;}
+  .example ol{font-size:12.5px;}
+  .wgrid{gap:10px;}
+  .wp{padding:5px 10px 8px;}
+  .wp .peq{margin:2px 0 6px;}
+  .wp .peq .n{font-size:34px;} .wp .peq .sym{font-size:28px;} .wp .peq .pb{width:48px;height:48px;font-size:30px;}
+  .wp .ptf{grid-template-columns:repeat(5,30px);grid-template-rows:repeat(2,30px);}
+  .wp .ptf .h::before{width:21px;height:21px;} .wp .ptf .t::before{width:19px;height:19px;}
+  .writeline{height:34px;}
+  /* answer key on one page */
+  .kgrid{gap:5px;}
+  .kcard{padding:3px 8px;gap:8px;}
+  .kcard h3{font-size:13.5px;margin:0 0 1px;}
+  .kcard ol{font-size:10.5px;line-height:1.22;}
+  .kcard .sk{margin:1px 0 0;}
+  .keywatch{font-size:11.5px;margin:2px 0 0;}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
 #confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:30;}
@@ -1145,7 +1168,7 @@ body.on-paper .dots, body.on-paper .count{display:none;}
       var missL=!p.side;
       var lc='<div class="c l'+(missL?' miss'+(key?' k':''):'')+'">'+(missL?M:p.a)+'</div>';
       var rc='<div class="c r'+(!missL?' miss'+(key?' k':''):'')+'">'+(!missL?M:p.a)+'</div>';
-      return '<div class="pbond"><svg width="170" height="140" aria-hidden="true"><line x1="85" y1="26" x2="30" y2="110" stroke="#7248B4" stroke-width="2.5"/><line x1="85" y1="26" x2="140" y2="110" stroke="#7248B4" stroke-width="2.5"/></svg><div class="c w">'+p.c+'</div>'+lc+rc+'</div>';
+      return '<div class="pbond"><svg width="150" height="120" aria-hidden="true"><line x1="75" y1="23" x2="27" y2="95" stroke="#7248B4" stroke-width="2.5"/><line x1="75" y1="23" x2="123" y2="95" stroke="#7248B4" stroke-width="2.5"/></svg><div class="c w">'+p.c+'</div>'+lc+rc+'</div>';
     }
     if(f==='picture'){
       var dots=''; for(var i=0;i<p.a;i++) dots+='<i></i>';
@@ -1221,7 +1244,7 @@ body.on-paper .dots, body.on-paper .count{display:none;}
     steps(ex).forEach(function(s){ h+='<li>'+esc(s)+'</li>'; }); h+='</ol></div></div>';
     function card(it,i){
       var tag=it.tag==='warm'?(i===S.problems.length-1?'finish strong':'warm-up'):'focus';
-      var body = (it.tag==='focus' && fmtOf(it.p)!=='picture') ? ptf(it.p,'scaffold') : '<div class="writeline"><small>Work space</small></div>';
+      var body = (it.tag==='focus' && fmtOf(it.p)!=='picture' && fmtOf(it.p)!=='bond') ? ptf(it.p,'scaffold') : '<div class="writeline"><small>Work space</small></div>';
       return '<div class="wp"><div class="wph"><b>'+(i+1)+'</b><span class="tag '+(it.tag==='warm'?'warm':'focus')+'">'+tag+'</span></div>'+pform(it.p,false)+body+'</div>';
     }
     h+='<div class="wgrid">'; S.problems.slice(0,6).forEach(function(it,i){ h+=card(it,i); }); h+='</div>';
